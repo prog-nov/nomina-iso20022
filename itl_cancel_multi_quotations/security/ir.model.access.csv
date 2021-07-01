@@ -1,0 +1,2 @@
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+access_itl_cancel_multi_quotations_itl_cancel_multi_quotations,itl_cancel_multi_quotations.itl_cancel_multi_quotations,model_itl_cancel_multi_quotations_itl_cancel_multi_quotations,,1,0,0,0

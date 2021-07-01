@@ -1,0 +1,77 @@
+<odoo>
+  <data>
+      
+    <record model="ir.ui.view" id="itl_view_quotation_tree_with_onboarding">
+      <field name="name">itl_sale_quotations list</field>
+      <field name="model">sale.order</field>
+      <field name="inherit_id" ref="sale.view_quotation_tree_with_onboarding"></field>
+      <field name="arch" type="xml">
+        <act_window name="Update State"
+            id="update_state_action"
+            res_model="update.state"
+            binding_model="sale.order"
+            binding_views="form"
+            view_mode="form"
+            target="new"
+        />
+      </field>
+    </record>
+
+    <!-- explicit list view definition -->
+    <!--
+    <record model="ir.ui.view" id="itl_quotations_cancel.list">
+      <field name="name">itl_quotations_cancel list</field>
+      <field name="model">itl_quotations_cancel.itl_quotations_cancel</field>
+      <field name="arch" type="xml">
+        <tree>
+          <field name="name"/>
+          <field name="value"/>
+          <field name="value2"/>
+        </tree>
+      </field>
+    </record>
+    -->
+
+    <!-- actions opening views on models -->
+    <!--
+    <record model="ir.actions.act_window" id="itl_quotations_cancel.action_window">
+      <field name="name">itl_quotations_cancel window</field>
+      <field name="res_model">itl_quotations_cancel.itl_quotations_cancel</field>
+      <field name="view_mode">tree,form</field>
+    </record>
+    -->
+
+    <!-- server action to the one above -->
+    <!--
+    <record model="ir.actions.server" id="itl_quotations_cancel.action_server">
+      <field name="name">itl_quotations_cancel server</field>
+      <field name="model_id" ref="model_itl_quotations_cancel_itl_quotations_cancel"/>
+      <field name="state">code</field>
+      <field name="code">
+        action = {
+          "type": "ir.actions.act_window",
+          "view_mode": "tree,form",
+          "res_model": self._name,
+        }
+      </field>
+    </record>
+    -->
+
+    <!-- Top menu item -->
+    <!--
+    <menuitem name="itl_quotations_cancel" id="itl_quotations_cancel.menu_root"/>
+    -->
+    <!-- menu categories -->
+    <!--
+    <menuitem name="Menu 1" id="itl_quotations_cancel.menu_1" parent="itl_quotations_cancel.menu_root"/>
+    <menuitem name="Menu 2" id="itl_quotations_cancel.menu_2" parent="itl_quotations_cancel.menu_root"/>
+    -->
+    <!-- actions -->
+    <!--
+    <menuitem name="List" id="itl_quotations_cancel.menu_1_list" parent="itl_quotations_cancel.menu_1"
+              action="itl_quotations_cancel.action_window"/>
+    <menuitem name="Server to list" id="itl_quotations_cancel" parent="itl_quotations_cancel.menu_2"
+              action="itl_quotations_cancel.action_server"/>
+    -->
+  </data>
+</odoo>
