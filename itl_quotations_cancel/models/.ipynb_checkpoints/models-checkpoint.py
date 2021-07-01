@@ -1,9 +1,17 @@
 # -*- coding: utf-8 -*-
 
 from odoo import models, fields, api
+import logging
+_logger = logging.getLogger(__name__)
 
-# class itl_quotations_cancel(models.Model):
-#     _name = 'itl_quotations_cancel.itl_quotations_cancel'
+
+class itl_quotations_cancel(models.Model):
+    _inherit = 'sale.order'
+    def metodo_prueba(self):
+        _logger.info("--> FONG Test")
+        self.write({'state': 'cancel'})
+
+        
 
 #     name = fields.Char()
 #     value = fields.Integer()

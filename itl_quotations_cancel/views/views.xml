@@ -1,12 +1,23 @@
 <odoo>
   <data>
       
-    <record model="ir.ui.view" id="itl_view_quotation_tree_with_onboarding">
-      <field name="name">itl_sale_quotations list</field>
+      <record model="ir.actions.server" id="itl_quotations_cancel.id_prueba">
+          <field name="name">Cancelar masivamente</field>
+          <field name="model_id" ref="sale.model_sale_order"/>
+          <field name="binding_model_id" ref="sale.model_sale_order"/>
+          <field name="binding_view_types">list</field>
+          <field name="state">code</field>
+          <field name="code">action = records.metodo_prueba()</field>
+      </record>
+      
+      <!--
+      <record model="ir.ui.view" id="itl_view_quotation_tree_with_onboarding">
+      <field name="name">itl_sale_payterms list</field>
       <field name="model">sale.order</field>
       <field name="inherit_id" ref="sale.view_quotation_tree_with_onboarding"></field>
       <field name="arch" type="xml">
-        <act_window name="Update State"
+        <field name="name" position="attributes">
+            <act_window name="Update State"
             id="update_state_action"
             res_model="update.state"
             binding_model="sale.order"
@@ -14,8 +25,22 @@
             view_mode="form"
             target="new"
         />
+        </field>
       </field>
     </record>
+
+      <record id="hr_expense_submit_action_server" model="ir.actions.server">
+        <field name="name">Expense: Submit To Manager</field>
+        <field name="type">ir.actions.server</field>
+        <field name="model_id" ref="model_hr_expense"/>
+        <field name="binding_model_id" ref="model_hr_expense"/>
+        <field name="state">code</field>
+        <field name="code">
+            if records:
+                action = records.submit_expenses()
+        </field>
+    </record> -->
+    
 
     <!-- explicit list view definition -->
     <!--
