@@ -1,0 +1,2 @@
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+access_prodigia-facturacion_prodigia-facturacion,prodigia-facturacion.prodigia-facturacion,model_prodigia-facturacion_prodigia-facturacion,,1,0,0,0

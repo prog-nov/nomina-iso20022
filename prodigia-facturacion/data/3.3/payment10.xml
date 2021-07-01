@@ -1,0 +1,121 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <template id="payment10">
+        <cfdi:Comprobante
+            xsi:schemaLocation="http://www.sat.gob.mx/cfd/3 http://www.sat.gob.mx/sitio_internet/cfd/3/cfdv33.xsd http://www.sat.gob.mx/Pagos http://www.sat.gob.mx/sitio_internet/cfd/Pagos/Pagos10.xsd"
+            xmlns:cfdi="http://www.sat.gob.mx/cfd/3"
+            xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+            xmlns:pago10="http://www.sat.gob.mx/Pagos"
+            Version="3.3"
+            t-att-Fecha="date"
+            t-att-Folio="invoice._get_string_cfdi(folio or '', 25) or False"
+            t-att-Serie="invoice._get_string_cfdi(serie or '', 40) or False"
+            Sello=""
+            t-att-NoCertificado="certificate_number"
+            t-att-Certificado="certificate"
+            SubTotal="0"
+            Moneda="XXX"
+            Total="0"
+            TipoDeComprobante="P"
+            t-att-LugarExpedicion="supplier.zip"
+            t-att-Confirmacion="confirmation">
+            <t t-set="related" t-value="record.get_cfdi_related()"/>
+            <t t-if="related">
+                <cfdi:CfdiRelacionados
+                    t-att-TipoRelacion="related['type']">
+                    <t t-foreach="related['related']" t-as="number">
+                        <cfdi:CfdiRelacionado t-att-UUID="number"/>
+                    </t>
+                </cfdi:CfdiRelacionados>
+            </t>
+            <cfdi:Emisor
+                t-att-Rfc="supplier.vat"
+                t-att-Nombre="invoice._get_string_cfdi(supplier.name, 254)"
+                t-att-RegimenFiscal="fiscal_position.l10n_mx_edi_code"/>
+            <cfdi:Receptor
+                t-att-Rfc="customer.l10n_mx_edi_get_customer_rfc()"
+                t-att-Nombre="invoice._get_string_cfdi(customer.commercial_partner_id.name, 254)"
+                t-att-ResidenciaFiscal="customer.country_id.l10n_mx_edi_code if customer.country_id.l10n_mx_edi_code != 'MEX' else False"
+                t-att-NumRegIdTrib="receiver_reg_trib"
+                UsoCFDI="P01"/>
+            <cfdi:Conceptos>
+                <cfdi:Concepto
+                    ClaveProdServ="84111506"
+                    Cantidad="1"
+                    ClaveUnidad="ACT"
+                    Descripcion="Pago"
+                    ValorUnitario="0"
+                    Importe="0"/>
+            </cfdi:Conceptos>
+            <cfdi:Complemento>
+                <pago10:Pagos
+                    Version="1.0">
+                    <pago10:Pago
+                        t-att-FechaPago="payment_date"
+                        t-att-FormaDePagoP="record.l10n_mx_edi_payment_method_id.code"
+                        t-att-MonedaP="record.currency_id.name"
+                        t-att-TipoCambioP="payment_rate"
+                        t-att-Monto="'%.*f' % (decimal_precision ,record.amount)"
+                        t-att-NumOperacion="record.communication"
+                        t-att-RfcEmisorCtaOrd="pay_vat_ord"
+                        t-att-NomBancoOrdExt="pay_name_ord"
+                        t-att-CtaOrdenante="pay_account_ord"
+                        t-att-RfcEmisorCtaBen="pay_vat_receiver"
+                        t-att-CtaBeneficiario="pay_account_receiver"
+                        t-att-TipoCadPago="pay_ent_type"
+                        t-att-CertPago="pay_certificate"
+                        t-att-CadPago="pay_string"
+                        t-att-SelloPago="pay_stamp">
+                        <t t-set="write_off" t-value="record.move_line_ids.filtered(lambda l: l.account_id == record.writeoff_account_id and l.name == record.writeoff_label).debit"/>
+                        <t t-foreach="record.invoice_ids" t-as="invoice">
+                            <t t-set="amount" t-value="[p for p in invoice._get_payments_vals() if p.get('account_payment_id', False) == record.id]"/>
+                            <t t-set="amount" t-value="amount[0].get('amount', 0.0) if amount else 0.0"/>
+                            <t t-set="balance" t-value="invoice.residual + amount"/>
+                            <t t-set="amount" t-value="amount - write_off"/>
+                            <t t-set="residual" t-value="balance - amount if balance - amount &gt; 0 else 0"/>
+                            <t t-set="inv_rate" t-value="('%.6f' % (invoice.currency_id.with_context(date=invoice.date_invoice).compute(1, record.currency_id, round=False))) if record.currency_id != invoice.currency_id else False"/>
+                            <t t-set="inv_rate" t-value="1 if inv_rate and invoice.currency_id.name == 'MXN' else inv_rate"/>
+                            <pago10:DoctoRelacionado
+                                t-att-IdDocumento="invoice.l10n_mx_edi_cfdi_uuid"
+                                t-att-Serie="invoice._l10n_mx_get_serie_and_folio(invoice.number).get('serie', False)"
+                                t-att-Folio="invoice._l10n_mx_get_serie_and_folio(invoice.number).get('folio', False)"
+                                t-att-MonedaDR="invoice.currency_id.name"
+                                t-att-TipoCambioDR="inv_rate"
+                                MetodoDePagoDR="PPD"
+                                t-att-NumParcialidad="len(invoice.payment_ids.filtered(lambda p: p.state != 'draft').ids)"
+                                t-att-ImpSaldoAnt="'%0.*f' % (decimal_precision, balance)"
+                                t-att-ImpPagado="'%0.*f' % (decimal_precision, amount)"
+                                t-att-ImpSaldoInsoluto="'%0.*f' % (decimal_precision, residual)"/>
+                        </t>
+                        <t t-if="total_transferred or total_withhold">
+                            <pago10:Impuestos
+                                t-att-TotalImpuestosRetenidos="total_withhold"
+                                t-att-TotalImpuestosTrasladados="total_transferred">
+                                <t t-if="withhold">
+                                    <pago10:Retenciones>
+                                        <t t-foreach="withhold" t-as="tax">
+                                            <pago10:Retencion
+                                                t-att-Impuesto="tax.tax"
+                                                t-att-Importe="tax.amount"/>
+                                        </t>
+                                    </pago10:Retenciones>
+                                </t>
+                                <t t-if="transferred">
+                                    <pago10:Traslados>
+                                        <t t-foreach="transferred" t-as="tax">
+                                            <pago10:Traslado
+                                                t-att-Impuesto="tax.tax"
+                                                t-att-TipoFactor="tax.type"
+                                                t-att-TasaOCuota="tax.rate"
+                                                t-att-Importe="tax.amount"/>
+                                        </t>
+                                    </pago10:Traslados>
+                                </t>
+                            </pago10:Impuestos>
+                        </t>
+                    </pago10:Pago>
+                </pago10:Pagos>
+            </cfdi:Complemento>
+        </cfdi:Comprobante>
+    </template>
+</odoo>

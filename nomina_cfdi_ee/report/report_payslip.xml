@@ -1,0 +1,379 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+   <data>
+      <record id="paperformat_a4_landscape" model="report.paperformat">
+         <field name="name">CDFI Letter</field>
+         <field eval="True" name="default" />
+         <field name="format">Letter</field>
+         <field name="page_height">0</field>
+         <field name="page_width">0</field>
+         <field name="orientation">Portrait</field>
+         <field name="margin_top">20</field>
+         <field name="margin_bottom">20</field>
+         <field name="margin_left">7</field>
+         <field name="margin_right">7</field>
+         <field eval="False" name="header_line" />
+         <field name="header_spacing">15</field>
+         <field name="dpi">90</field>
+      </record>
+      <template id="cfdi_payroll_layout">
+         <!-- Multicompany -->
+         <t t-if="not o and doc">
+            <t t-set="o" t-value="doc" />
+         </t>
+         <t t-if="o and 'company_id' in o">
+            <t t-set="company" t-value="o.company_id" />
+         </t>
+         <t t-if="not o or not 'company_id' in o">
+            <t t-set="company" t-value="res_company" />
+         </t>
+         <div class="header">
+            <div class="row">
+               <!--<div class="col-xs-9 text-left" style="margin-top:20px;" t-field="company.report_header"/>-->
+            </div>
+            <div class="row zero_min_height">
+               <div class="col-xs-12">
+                  <div style="border-bottom: 1px solid black;" />
+               </div>
+            </div>
+         </div>
+         <div class="article o_report_layout_standard">
+            <t t-raw="0" />
+         </div>
+         <!--EMPIEZA EL FOOTER-->
+         <div class="footer">
+            <div class="text-center" style="border-top: 1px solid black;">
+               <!--
+          <ul class="list-inline mb4"><li t-if="company.phone">Teléfono: 
+              <span t-field="company.phone"/></li><li t-if="company.email">&amp;bull;</li><li t-if="company.email">Correo Electrónico: 
+              <span t-field="company.email"/></li><li t-if="company.website">&amp;bull;</li><li t-if="company.website">Página web: 
+              <span t-field="company.website"/></li></ul><div name="financial_infos"><span t-field="company.report_footer"/></div>-->
+               <div class="text-muted">
+                  Hoja:
+                  <span class="page" />
+                  /
+                  <span class="topage" />
+               </div>
+            </div>
+         </div>
+         <!--TERMINA EL FOOTER-->
+      </template>
+      <!--TERMINA CFDI EXTERNAL LAYOUT-->
+      <template id="report_payslip_document">
+         <t t-call="nomina_cfdi_ee.cfdi_payroll_layout">
+            <t t-set="o" t-value="o.with_context({'lang':'es_MX'})" />
+            <div class="page container" style="padding-top: 10px; font-size:12px;">
+               <div class="row">
+                  <!--INICIA LOGO DE LA EMPRESA-->
+                  <!--<div class="col-2"><img style="max-height: 130px;" t-att-src="'data:image/png;base64,%s' % to_text(o.company_id.logo)" t-if="o.company_id.logo"/></div>-->
+                  <!--TERMINA LOGO DE LA EMPRESA-->
+                  <!--EMPIEZA DATOS DEL EMISOR-->
+                  <div class="col-4">
+                     <div>
+                        <span>Recibo de Nómina</span>
+                     </div>
+                  </div>
+                  <!--TERMINA DATOS DEL EMISOR-->
+                  <!--INFORMACIÓN GENERAL NOMINA-->
+                  <div class="col-4 text-center">
+                     <div>
+                        <span t-field="o.company_id.name" />
+                     </div>
+                  </div>
+                  <div class="col-4 text-right">
+                     <div>
+                        R.F.C.
+                        <span t-field="o.company_id.vat" />
+                     </div>
+                  </div>
+                  <!--TERMINA INFORMACIÓN GENERAL DE LA NOMINA-->
+               </div>
+                
+               <div class="row">
+                  <div class="col-6">
+                     UUID:
+                     <span t-field="o.l10n_mx_edi_cfdi_uuid" />
+                  </div>
+               </div>
+                
+               <t t-set="dias_trabajados" t-value="0.0" />
+               <t t-set="dias_vacaiones" t-value="0.0" />
+               <t t-set="septimo_dia" t-value="0.0" />
+               <t t-set="prima_dominical" t-value="0.0" />
+               <t t-set="worked_days" t-value="o.worked_days_line_ids.filtered(lambda x:x.code=='WORK100')" />
+               <t t-if="len(worked_days)&gt;0">
+                  <t t-set="dias_trabajados" t-value="dias_trabajados + worked_days[0].number_of_days" />
+               </t>
+               <t t-set="worked_days" t-value="o.worked_days_line_ids.filtered(lambda x:x.code=='FJC')" />
+               <t t-if="len(worked_days)&gt;0">
+                  <t t-set="dias_trabajados" t-value="dias_trabajados + worked_days[0].number_of_days" />
+               </t>
+               <t t-set="worked_days" t-value="o.worked_days_line_ids.filtered(lambda x:x.code=='VAC')" />
+               <t t-if="len(worked_days)&gt;0">
+                  <t t-set="dias_vacaiones" t-value="worked_days[0].number_of_days" />
+               </t>
+               <t t-set="worked_days" t-value="o.worked_days_line_ids.filtered(lambda x:x.code=='PDM')" />
+               <t t-if="len(worked_days)&gt;0">
+                  <t t-set="prima_dominical" t-value="worked_days[0].number_of_days" />
+               </t>
+               <t t-if="o.contract_id.periodicidad_pago == '02'">
+                  <t t-set="septimo_dia" t-value="round(dias_trabajados/6,2)" />
+               </t>
+               <!--<h2>Recibo de nómina</h2>-->
+                <!--
+               <div class="row" style="padding-top: 5px;">
+                  <div class="col-5" font-size="18px;">
+                     <div>
+                        <strong>Receptor</strong>
+                     </div>
+                     <div>
+                        <strong>Nombre</strong>
+                        :
+                        <span t-field="o.employee_id.name" />
+                     </div>
+                     <div>
+                        <strong>Puesto</strong>
+                        :
+                        <span t-field="o.employee_id.job_id" />
+                     </div>
+                     <div>
+                        <strong>Depto</strong>
+                        :
+                        <span t-field="o.employee_id.department_id.name" />
+                     </div>
+                     <div>
+                        <strong>RFC</strong>
+                        :
+                        <span t-field="o.employee_id.rfc" />
+                     </div>
+                     <div>
+                        <strong>CURP</strong>
+                        :
+                        <span t-field="o.employee_id.curp" />
+                     </div>
+                  </div>
+                  <div class="col-7">
+                     <div>
+                        <strong>Datos de la nómina</strong>
+                     </div>
+                     <div>
+                        <strong>Periodicidad de pago</strong>
+                        :
+                        <span t-field="o.contract_id.periodicidad_pago" />
+                     </div>
+                     <div>
+                        <strong>Seguro social</strong>
+                        :
+                        <span t-field="o.employee_id.segurosocial" />
+                     </div>
+                     <div>
+                        <strong>Salario integrado</strong>
+                        :
+                        <span t-esc="round(o.contract_id.sueldo_diario_integrado,2)" />
+                        diario
+                     </div>
+                     <div>
+                        <strong>Jornada</strong>
+                        :
+                        <span t-field="o.employee_id.jornada" />
+                     </div>
+                     <div>
+                        <strong>Fecha de ingreso</strong>
+                        :
+                        <span t-field="o.contract_id.date_start" />
+                     </div>
+                     <div>
+                        <strong>Total de días laborados</strong>
+                        :
+                        <span t-esc="dias_trabajados + septimo_dia" />
+                     </div>
+                  </div>
+               </div>
+                -->
+                <br/>
+               <!--PARTE DATOS DE NOMINA-->
+               <div class="row">
+                   <div class="col-12 border-left border-right border-top border-bottom">
+                       <div class="row">
+                           <div class="col-3">
+                               <span t-field="o.employee_id.no_empleado" />
+                           </div>
+                           <div class="col-3 text-center">
+                               <span t-field="o.employee_id.name" />
+                           </div>
+                           <div class="col-3 text-center">
+                               R.F.C. <span t-field="o.employee_id.rfc" />
+                           </div>
+                           <div class="col-3 text-right">
+                               Afil I.M.S.S. <span t-field="o.employee_id.segurosocial" />
+                           </div>
+                       </div>
+                       <div class="row">
+                           <div class="col-3">
+                               Departamento: <span t-field="o.employee_id.job_id" />
+                           </div>
+                           <div class="col-3 text-center">
+                               Dias Trab. <span t-esc="dias_trabajados + septimo_dia" />
+                           </div>
+                           <div class="col-3 text-center">
+                               Periodo <span t-field="o.contract_id.periodicidad_pago" />
+                           </div>
+                           <div class="col-3 text-right">
+                                <span t-field="o.date_from" /> - <span t-field="o.date_to" />
+                           </div>
+                       </div>
+                   </div>
+               </div>
+                
+                <div class="row border-left border-right border-bottom">
+                    <div class="col-6 text-center border-right">
+                        <span>PERCEPCIONES</span>
+                    </div>
+                    <div class="col-6 text-center">
+                        <span>DEDUCCIONES</span>
+                    </div>
+                </div>
+                
+                <div class="row border-right border-bottom">
+                    <div class="col-3 border-left">
+                        <span>Concepto</span>
+                    </div>
+                    <div class="col-3 text-right">
+                        <span>Importe</span>
+                    </div>
+                    <div class="col-3 border-left">
+                        <span>Concepto</span>
+                    </div>
+                    <div class="col-3 text-right">
+                        <span>Importe</span>
+                    </div>
+                </div>
+                
+                <div class="row border-right">
+                    <div class="col-6 border-left border-right border-bottom pb-3">
+                        <t t-as="line" t-foreach="o.line_ids.filtered(lambda line: line.appears_on_payslip and 'ALW' in line.category_id.code)">
+                            <div class="row">
+                                <div class="col-4">
+                                    <span t-field="line.name"/>
+                                </div>
+                                <div class="col-4 text-center">
+                                    <t t-if="'SUELDO' in line.code">
+                                        <span t-esc="dias_trabajados"/>
+                                    </t>
+                                </div>
+                                <div class="col-4 text-right">
+                                    <span t-esc="line.total" t-options="{&quot;widget&quot;: &quot;monetary&quot;, &quot;display_currency&quot;: o.company_id.currency_id}"/>
+                                </div>
+                            </div>
+                        </t>
+                    </div>
+                    <div class="col-6 border-bottom pb-3">
+                        <t t-as="line" t-foreach="o.line_ids.filtered(lambda line: line.appears_on_payslip and 'DED' in line.category_id.code)">
+                            <div class="row">
+                                <div class="col-6">
+                                    <span t-field="line.name"/>
+                                </div>
+                                <div class="col-6 text-right">
+                                    <span t-esc="line.total" t-options="{&quot;widget&quot;: &quot;monetary&quot;, &quot;display_currency&quot;: o.company_id.currency_id}"/>
+                                </div>
+                            </div>
+                        </t>
+                    </div>
+                </div>
+                
+                <div class="row border-right border-bottom">
+                    <div class="col-3 text-center border-left">
+                        <span>Suma de percepciones</span>
+                    </div>
+                    <div class="col-3 text-right">
+                        <span t-esc="o.allowance_total_amount" t-options="{&quot;widget&quot;: &quot;monetary&quot;, &quot;display_currency&quot;: o.company_id.currency_id}"/>
+                    </div>
+                    <div class="col-3 border-left">
+                        <span>Suma de deducciones</span>
+                    </div>
+                    <div class="col-3 text-right">
+                        <span t-esc="o.deduction_total_amount" t-options="{&quot;widget&quot;: &quot;monetary&quot;, &quot;display_currency&quot;: o.company_id.currency_id}"/>
+                    </div>
+                </div>
+                
+                <div class="row border-right">
+                    <div class="col-6 border-right"></div>
+                    <div class="col-6 text-right border-bottom">
+                        <span>Neto a pagar </span>
+                        <span t-esc="o.neto_total_amount" t-options="{&quot;widget&quot;: &quot;monetary&quot;, &quot;display_currency&quot;: o.company_id.currency_id}"/>
+                    </div>
+                </div>
+                <br/>
+                <br/>
+                <div class="row">
+                    <div class="col-6 text-justify">
+                        <p>Recibí de la empresa arriba mencionada, la cantidad neta a que este documento se refirere, estando conforme con las percepciones y deducciones que en el aparecen especificados.</p>
+                    </div>
+                    <div class="col-6 text-center">
+                        <br/>
+                        <div class="row">
+                            <div class="col-12 text-center">
+                                <span>______________________________</span>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-12 text-center">
+                                <span>Firma del empleado</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <br/>
+                <br/>
+               <t t-if="o.l10n_mx_edi_cfdi_uuid">
+                  <div class="row" style="page-break-inside: avoid">
+                     <t t-if="o.l10n_mx_edi_cfdi_uuid">
+                        <!--New global variables-->
+                        <t t-set="xml" t-value="o.l10n_mx_edi_get_xml_etree()" />
+                        <t t-set="tfd" t-value="o.l10n_mx_edi_get_tfd_etree(xml)" />
+                        <t t-set="tfd_original_string" t-value="o._get_l10n_mx_edi_cadena()" />
+                        <t t-set="external" t-value="o.l10n_mx_edi_get_et_etree(xml)" />
+                     </t>
+                     <!--INICIA CODIGO QR-->
+                     <div class="col-3">
+                        <!--<img style="height: 190px;width: 190px;padding-left:10px;" t-att-src="'data:image/png;base64,%s' % to_text(o.qrcode_image)" t-if="o.qrcode_image"/>-->
+                        <t t-set="sello" t-value="xml.get('Sello', 'No identificado')[-8:]" />
+                        <img alt="Barcode" t-att-src="'/report/barcode/?type=QR&amp;value=%s&amp;width=150&amp;height=150' % quote_plus(                                 'https://verificacfdi.facturaelectronica.sat.gob.mx/default.aspx?' + keep_query(re=o.l10n_mx_edi_cfdi_supplier_rfc, rr=o.l10n_mx_edi_cfdi_customer_rfc, tt='%.*f' % (o.currency_id.decimal_places, o.l10n_mx_edi_cfdi_amount), id=o.l10n_mx_edi_cfdi_uuid) + '&amp;fe=%s' % quote_plus(sello, 'utf-8', 'strict', '=/').replace('%2B', '+'))" />
+                     </div>
+                     <!--TERMINA CODIGO QR-->
+                     <!--CADENA ORIGINAL>-->
+                     <div class="col-9" style="font-size:11px !important;">
+                        <div>
+                           <strong>Cadena Original del Complemento digital del SAT</strong>
+                           <span class="text-justify" style="word-break:break-word;" t-esc="tfd_original_string" />
+                        </div>
+                        <div>
+                           <strong>Sello digital del CFDI</strong>
+                           <span class="text-justify" style="word-break:break-word;" t-esc="xml.get('sello', xml.get('Sello', 'No identificado'))" />
+                        </div>
+                        <div>
+                           <strong>Sello del SAT</strong>
+                           <span class="text-justify" style="word-break:break-word;" t-esc="tfd.get('selloSAT', tfd.get('SelloSAT', 'No identificado'))" />
+                        </div>
+                     </div>
+                  </div>
+                  <!--DOCUMENTO LEGAL-->
+                  <p>
+                     <center>
+                        <strong>ESTE DOCUMENTO ES UNA REPRESENTACIÓN IMPRESA DE UN CFDI</strong>
+                     </center>
+                  </p>
+               </t>
+            </div>
+         </t>
+      </template>
+      <template id="report_payslip">
+         <t t-call="web.html_container">
+            <t t-as="o" t-foreach="docs">
+               <t t-call="nomina_cfdi_ee.report_payslip_document" t-lang="es_MX" />
+            </t>
+         </t>
+      </template>
+      <report file="nomina_cfdi_ee.report_payslip" id="report_payslips" model="hr.payslip" name="nomina_cfdi_ee.report_payslip" paperformat="nomina_cfdi_ee.paperformat_a4_landscape" report_type="qweb-pdf" string="Imprimir Nomina" print_report_name="'Nómina - %s - %s' % (object.employee_id.name, object.fecha_pago)" />
+   </data>
+</odoo>

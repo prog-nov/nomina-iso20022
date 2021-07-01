@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+	<menuitem
+          name="Movimientos"
+          parent="hr.menu_hr_root"
+          id="menu_main_movimientos"
+          sequence="80"
+      />
+</odoo>

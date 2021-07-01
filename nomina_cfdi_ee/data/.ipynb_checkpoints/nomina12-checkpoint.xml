@@ -1,0 +1,133 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+        <template id="nomina12">
+            <cfdi:Comprobante
+                xsi:schemaLocation="http://www.sat.gob.mx/cfd/3 http://www.sat.gob.mx/sitio_internet/cfd/3/cfdv33.xsd http://www.sat.gob.mx/nomina12 http://www.sat.gob.mx/sitio_internet/cfd/nomina/nomina12.xsd"
+                xmlns:cfdi="http://www.sat.gob.mx/cfd/3"
+                xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                xmlns:nomina12="http://www.sat.gob.mx/nomina12"
+                Version="3.3"
+                t-att-Folio="record._get_string_cfdi(folio or '', 40)"
+                t-att-Serie="record._get_string_cfdi(serie or '', 25)"
+                t-att-Fecha="date"
+                t-att-SubTotal="amount_untaxed"
+                t-att-Descuento="amount_discount"
+                t-att-Moneda="currency_name"
+                t-att-Total="amount_total"
+                t-att-TipoDeComprobante="document_type[0].upper()"
+                t-att-FormaPago="(payment_method or '').replace('NA', '99')"
+                t-att-MetodoPago="payment_policy"
+                t-att-TipoCambio="rate"
+                t-att-LugarExpedicion="supplier.zip"
+                t-att-NoCertificado="certificate_number"
+                t-att-Certificado="certificate"
+                Sello=""
+                t-att-Confirmacion="confirmation">
+                <t t-set="related" t-value="record.get_cfdi_related()"/>
+                <t t-if="related">
+                    <cfdi:CfdiRelacionados
+                        t-att-TipoRelacion="related['type']">
+                        <t t-foreach="related['related']" t-as="number">
+                            <cfdi:CfdiRelacionado t-att-UUID="number"/>
+                        </t>
+                    </cfdi:CfdiRelacionados>
+                </t>
+                <cfdi:Emisor
+                    t-att-Rfc="supplier.vat"
+                    t-att-Nombre="record._get_string_cfdi(supplier.name, 254)"
+                    t-att-RegimenFiscal="fiscal_regime"/>
+                <cfdi:Receptor
+                    t-att-Rfc="customer.l10n_mx_edi_get_customer_rfc()"
+                    t-att-Nombre="record._get_string_cfdi(customer.commercial_partner_id.name, 254)"
+                    t-att-ResidenciaFiscal="customer.country_id.l10n_mx_edi_code if customer.country_id.l10n_mx_edi_code != 'MEX' and customer.l10n_mx_edi_get_customer_rfc() not in ['XEXX010101000', 'XAXX010101000'] else False"
+                    t-att-NumRegIdTrib="receiver_reg_trib"
+                    t-att-UsoCFDI="use_cfdi"/>
+                <cfdi:Conceptos>
+                    <t t-foreach="concepts" t-as="line">
+                        <cfdi:Concepto
+                            t-att-ClaveProdServ="'01010101' if not line['product_code'] else line['product_code']"
+                            t-att-Cantidad="line['quantity']"
+                            t-att-ClaveUnidad="'H87' if not line['unit_code'] else line['unit_code']"
+                            t-att-Descripcion="record._get_string_cfdi(line['name'], 1000)"
+                            t-att-ValorUnitario="'%.2f' % line['unit_amount'] if line['unit_amount'] else 0.0"
+                            t-att-Importe="'%.2f' % line['total_amount']"
+                            t-att-Descuento="'%.2f' % line['discount']"/>
+                    </t>
+                </cfdi:Conceptos>
+                <cfdi:Complemento>
+                    <nomina12:Nomina
+                        t-att-FechaInicialPago="record.date_from"
+                        t-att-FechaFinalPago="record.date_to"
+                        t-att-FechaPago="record.fecha_pago"
+                        t-att-NumDiasPagados="int(record.dias_periodo)"
+                        t-att-TipoNomina="record.tipo_nomina"
+                        t-att-TotalDeducciones="'%.2f' % amount_discount"
+                        t-att-TotalOtrosPagos="'%.2f' % otros_amount"
+                        t-att-TotalPercepciones="'%.2f' % total_gravado"
+                        t-att-Version="1.2">
+                        <nomina12:Emisor t-att-RegistroPatronal="record.employee_id.registro_patronal"/>
+                        <nomina12:Receptor
+                            t-att-Curp="record.employee_id.curp"
+                            t-att-TipoContrato="record.employee_id.contrato"
+                            t-att-TipoRegimen="record.employee_id.regimen"
+                            t-att-NumEmpleado="record.employee_id.no_empleado"
+                            t-att-PeriodicidadPago="record.employee_id.contract_id.periodicidad_pago"
+                            t-att-ClaveEntFed="record.employee_id.estado.code"
+                            t-att-NumSeguridadSocial="record.employee_id.segurosocial"
+                            t-att-FechaInicioRelLaboral="record.employee_id.contract_id.date_start"
+                            t-att-Antigüedad="antiguedad"
+                            t-att-Puesto="record.employee_id.job_id.name"
+                            t-att-SalarioBaseCotApor="'%.2f' % record.employee_id.contract_id.sueldo_base_cotizacion"
+                            t-att-RiesgoPuesto="record.employee_id.contract_id.riesgo_puesto"
+                            t-att-SalarioDiarioIntegrado="'%.2f' % record.employee_id.contract_id.sueldo_diario_integrado"
+                            />
+                        <t t-if="len(record.line_ids.filtered(lambda line: line.category_id.code == 'ALW')) > 0">
+                            <nomina12:Percepciones
+                                t-att-TotalExento="'%.2f' % total_exento"
+                                t-att-TotalGravado="'%.2f' % total_gravado"
+                                t-att-TotalSueldos="'%.2f' % total_gravado">
+                                <t t-foreach="record.line_ids.filtered(lambda line: line.category_id.code == 'ALW')" t-as="line">
+                                    <nomina12:Percepcion
+                                        t-att-Clave="line.code"
+                                        t-att-Concepto="line.salary_rule_id.name"
+                                        t-att-ImporteExento="'%.2f' % 0.00"
+                                        t-att-ImporteGravado="'%.2f' % line.total"
+                                        t-att-TipoPercepcion="line.salary_rule_id.tipo_percepcion"/>
+                                </t>
+                            </nomina12:Percepciones>
+                        </t>
+                        <t t-if="len(record.line_ids.filtered(lambda line: line.category_id.code == 'DED')) > 0">
+                            <nomina12:Deducciones
+                                t-att-TotalImpuestosRetenidos="'%.2f' % record.line_ids.filtered(lambda line: line.code == 'DED_ISR').total"
+                                t-att-TotalOtrasDeducciones="'%.2f' % sum(record.line_ids.filtered(lambda line: line.category_id.code == 'DED' and line.code != 'DED_ISR').mapped('total'))">
+                                <t t-foreach="record.line_ids.filtered(lambda line: line.category_id.code == 'DED')" t-as="line">
+                                    <nomina12:Deduccion
+                                        t-att-Clave="line.code"
+                                        t-att-Concepto="line.salary_rule_id.name"
+                                        t-att-Importe="'%.2f' % line.total"
+                                        t-att-TipoDeduccion="line.salary_rule_id.tipo_deduccion"/>
+                                </t>
+                            </nomina12:Deducciones>
+                        </t>
+                        <t t-if="record.employee_id.regimen in ['02']">
+                            <nomina12:OtrosPagos>
+                                <t t-foreach="record.line_ids.filtered(lambda line: line.category_id.code == 'DED_OTRO' and line.salary_rule_id.tipo_otro_pago != '002')" t-as="line">
+                                    <nomina12:OtroPago t-att-Clave="line.code" t-att-Concepto="line.salary_rule_id.name" t-att-Importe="'%.2f' % line.total" t-att-TipoOtroPago="line.salary_rule_id.tipo_otro_pago"/>
+                                </t>
+                                <t if="len(record.line_ids.filtered(lambda line: line.category_id.code == 'DED_OTRO' and line.salary_rule_id.tipo_otro_pago == '002')) > 0">
+                                    <t t-foreach="record.line_ids.filtered(lambda line: line.category_id.code == 'DED_OTRO' and line.salary_rule_id.tipo_otro_pago == '002')" t-as="line">
+                                        <nomina12:OtroPago t-att-Clave="line.code" t-att-Concepto="line.salary_rule_id.name" t-att-Importe="'%.2f' % line.total" t-att-TipoOtroPago="line.salary_rule_id.tipo_otro_pago">
+                                            <nomina12:SubsidioAlEmpleo t-att-SubsidioCausado="'%.2f' % line.total"/>
+                                        </nomina12:OtroPago>
+                                    </t>
+                                </t>
+                             </nomina12:OtrosPagos>
+                        </t>
+                        
+                    </nomina12:Nomina>
+                </cfdi:Complemento>
+            </cfdi:Comprobante>
+        </template>
+    </data>
+</odoo>

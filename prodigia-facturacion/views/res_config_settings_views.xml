@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="res_config_settings_prodigia_contract" 
+        model="ir.ui.view">
+        <field name="name">prodigia.facturacion.account.config.view</field>
+        <field name="model">res.config.settings</field>
+        <field name="inherit_id" 
+            ref="account.res_config_settings_view_form"/>
+        <field name="arch" 
+            type="xml">
+            <xpath expr="//div[@id='l10n_mx_edi_settings']//div[hasclass('content-group')]//div[hasclass('row','mt16')]" 
+                position="after">
+                <div class="row">
+                    <label string="Contrato Prodigia" 
+                        for="l10n_mx_edi_pac_contract" 
+                        class="col-md-3 o_light_label" 
+                        attrs="{'invisible':[('l10n_mx_edi_pac', '!=', 'prodigia')]}" />
+                    <field name="l10n_mx_edi_pac_contract" 
+                        readonly="0" 
+                        attrs="{'invisible':[('l10n_mx_edi_pac', '!=', 'prodigia')]}" />
+                </div>
+            </xpath>
+        </field>
+    </record>
+</odoo>
