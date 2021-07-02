@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record model="ir.ui.view" id="credit_management_limit_wizard">
+        <field name="name">Customer Credit Limit Form</field>
+        <field name="model">sale.customer.credit.limit.wizard</field>
+        <field name="arch" type="xml">
+            <form>
+                <group>
+                    <span>Request manager to approve the SO as the SO is
+                        greater than credit limit or wait until your invoices
+                        are paid.</span>
+                </group>
+                <footer>
+                    <button name="action_exceed_limit" string="Request"
+                            type="object" class="oe_highlight"/>
+                    <button string="Cancel" special="cancel"
+                            class="oe_highlight"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+</odoo>

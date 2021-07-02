@@ -1,0 +1,260 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+        <record id="view_hr_payslip_form" model="ir.ui.view">
+            <field name="name">hr.payslip.nomina</field>
+            <field name="model">hr.payslip</field>
+            <field name="inherit_id" ref="hr_payroll.view_hr_payslip_form"/>
+            <field name="arch" type="xml">
+                <button name="action_payslip_cancel" position="attributes">
+                    <attribute name="states">draft,done,verify</attribute>
+                </button>
+              <field name="credit_note" position="after">
+                    <field name="tipo_nomina" />
+                    <field name="fecha_pago" />
+                    <!--<field name="mes" attrs="{'required':[('tipo_nomina','=','O')], 'invisible':[('tipo_nomina','!=','O')]}"/>-->
+                    <!--<field name="no_nomina" attrs="{'required':[('tipo_nomina','=','O')], 'invisible':[('tipo_nomina','!=','O')]}"/>-->
+                    <field name="nomina_cfdi" invisible="1"/>
+                    <field name="currency_id" invisible="1"/>
+              </field>
+              <field name="state" position="attributes">
+                <attribute name="clickable">True</attribute>
+              </field>
+              <xpath expr="//notebook" position="inside">
+                <page name="info_cdfi" string="CFDI 3.3">
+                        <group cols="4">
+                            <!--<group string="Nómina">
+                                <field name="dias_pagar"/>
+                                
+                               <field name="acum_per_grav" />
+                               <field name="acum_isr" />
+                               <field name="isr_ajustar" />
+                                
+                            </group>-->
+                            <group string="Datos CFDI">
+                                <field name="l10n_mx_edi_payment_method_id"/>
+                                <field name="tipo_comprobante"/>
+                                <!--<field name="methodo_pago"/>-->
+                                <field name="l10n_mx_edi_usage"/>
+                                <field name="invoice_payment_term_id"/>
+                            </group>
+                            <group  string="Detalles de Factura">
+                                <label for="l10n_mx_edi_pac_status" attrs="{'invisible': [('l10n_mx_edi_pac_status', '=', False)]}"/>
+                                <div class="o_row" attrs="{'invisible': [('l10n_mx_edi_pac_status', '=', False)]}">
+                                    <field name="l10n_mx_edi_pac_status"/>
+                                    <button name="l10n_mx_edi_update_pac_status" string="Retry" class="oe_link" type="object" groups="base.group_user" attrs="{'invisible':[('l10n_mx_edi_pac_status', 'in', ['signed', 'cancelled', False])]}"/>
+                                    <button name="l10n_mx_edi_request_cancellation" string="Request Cancellation" class="oe_link" type="object" groups="account.group_account_invoice" attrs="{'invisible':[('l10n_mx_edi_pac_status', 'not in', ['signed'])]}"/>
+                                </div>
+                                
+                                <label for="l10n_mx_edi_sat_status" attrs="{'invisible': [('state', 'not in', ['done', 'cancel'])]}"/>
+                                <div class="o_row" attrs="{'invisible': [('state', 'not in', ['done', 'cancel'])]}">
+                                    <field name="l10n_mx_edi_sat_status"/>
+                                    <button name="l10n_mx_edi_update_sat_status" string="Retry" class="oe_link" type="object" groups="base.group_user" attrs="{'invisible':['|', ('l10n_mx_edi_pac_status', 'in', ['retry', 'to_sign', 'to_cancel', False]), ('state', '=', 'draft')]}"/>
+                                </div>
+                                
+                                <label for="l10n_mx_edi_cfdi_uuid" attrs="{'invisible': [('state', 'not in', ['done', 'cancel'])]}"/>
+                                <div class="o_row" attrs="{'invisible': [('state', 'not in', ['done', 'cancel'])]}">
+                                    <field name="l10n_mx_edi_cfdi_uuid"/>
+                                </div>
+                                <field name="estado_factura"/>
+                            </group>
+                            <!--
+                            <group string="CFDI Relacionados">
+                                <field name="tipo_relacion"/>
+                                <field name="uuid_relacionado"/>
+                            </group>
+                            -->
+                            <!--<group string="Acciones">
+                                <button name="edi_retry" type="object" string="Generar CFDI"
+                                    class="oe_highlight" groups="base.group_user"/>
+                            </group>-->
+                        </group>
+                </page>
+                  <!--
+                <page name="info_cdfi" string="Información adicional">
+                        <group cols="4">
+                            <group string="Dias">
+                                <field name="dias_pagar"/>
+                                <field name="imss_dias"/>
+                                <field name="dias_periodo" readonly="1"/>
+                                <field name="num_faltas"/>
+                            </group>
+                            
+                            <group string="Procesamiento">
+                                <field name="concepto_periodico"/>
+                                <field name="isr_ajustar"/>
+                                <field name="isr_devolver"/>
+                            </group>
+                            <group string="Acumulados (mensual)">
+                                <field name="acum_per_totales" />
+                                <field name="acum_per_grav" />
+                                <field name="acum_isr" />
+                                <field name="acum_isr_antes_subem" />
+                                <field name="acum_subsidio_aplicado" />
+                                <field name="acum_fondo_ahorro" />
+                            </group>
+                        </group>
+                </page>
+                -->
+              </xpath>
+                
+              <xpath expr="//form" position="inside">
+                  <div class="oe_chatter">
+                <field name="message_follower_ids" widget="mail_followers"/>
+                <field name="message_ids" widget="mail_thread"/>
+            </div>
+              </xpath>
+
+              <button name="action_payslip_cancel" position="before">
+                   <button name="edi_retry" type="object" string="Generar CFDI" 
+                            attrs="{'invisible':['|',('estado_factura','=','factura_correcta'),('state','!=','done')]}"
+                            class="oe_highlight" groups="base.group_user"/>
+                   <button name="action_cfdi_cancel" type="object" string="Cancelar CFDI" 
+                            attrs="{'invisible':['|',('nomina_cfdi','=',False), ('estado_factura','=','factura_cancelada')]}" 
+                            class="oe_highlight" groups="base.group_user" confirm="¿Esta seguro que quiere cancelar la factura?"/>
+                   <button name="send_nomina" class="oe_highlight" attrs="{'invisible':[('estado_factura','!=','factura_correcta')]}" string="Enviar por correo" type="object"/>
+                </button>
+                
+                <field name="line_ids" position="after">
+                    <group>
+                        <group></group>
+                        <group>
+                            <group class="oe_subtotal_footer oe_right" colspan="2" name="payroll_total">
+                                <field name="allowance_total_amount" widget='monetary' options="{'currency_field': 'currency_id'}"/>
+                                <field name="deduction_total_amount" widget='monetary' options="{'currency_field': 'currency_id'}"/>
+                                <div class="oe_subtotal_footer_separator oe_inline o_td_label">
+                                    <label for="neto_total_amount" />
+                                </div>
+                                <field name="neto_total_amount" nolabel="1" class="oe_subtotal_footer_separator" widget='monetary' options="{'currency_field': 'currency_id'}"/>
+                            </group>
+                        </group>
+                        <div class="oe_clear"/>
+                    </group>
+                </field>
+            </field>
+        </record>
+
+       <record id="hr_payslip_run_form_nomina_cfdi" model="ir.ui.view">
+            <field name="name">hr.payslip.run.form.nomina</field>
+            <field name="model">hr.payslip.run</field>
+            <field name="priority">50</field>
+            <field name="inherit_id" ref="hr_payroll.hr_payslip_run_form"/>
+            <field name="arch" type="xml">
+            	<xpath expr="//sheet" position="replace">
+            		<sheet>
+            			<label for="name" class="oe_edit_only"/>
+		                <h1>
+		                    <field name="name"/>
+		                </h1>
+		                <notebook>
+		                	<page string="Configuración" name="general">
+		                		<group>
+		                			<group>
+		                				<field name="periodicidad_pago" string="Frecuencia de pago"/>
+		                			</group>
+		                			<group>
+					                   <field name="dias_pagar" />
+		                			</group>
+		                		</group>
+		                		<group>
+		                			<label for="date_start" string="Periodo"/>
+				                     <div>
+				                           <field name="date_start" class="oe_inline"/> - <field name="date_end" class="oe_inline"  force_save="1"/> <!--readonly="1"-->
+				                     </div>
+                                    
+				                     <!--<field name="journal_id"/>
+				                    <field name="credit_note"/>-->
+				                </group>
+                                <group>
+		                			<label for="estructura" string="Tipo de nómina"/>
+				                     <div>
+				                       <field name="tipo_nomina" class="oe_inline"/>
+				                       <field name="estructura" attrs="{'invisible' : [('tipo_nomina','!=','E')]}" class="oe_inline"/>
+				                     </div>
+                                </group>
+                                <group cols="4">
+                                <group  string="Configuración">
+					                   <field name="no_nomina" /> 
+				                       <field name="concepto_periodico"/>
+				                       <field name="isr_ajustar"/> 
+				                      <field name="isr_devolver"/> 
+				                </group>
+					                <group  string="Dias a cotizar IMSS">
+					                   <field name="imss_dias"/>
+					                   <field name="imss_mes" />
+					                   <field name="nominas_mes" />
+					                 </group>
+					            </group>
+		                	</page>
+		                	<page name="nominas" string="Nominas">
+		                		<field name="slip_ids"/>
+		                	</page>
+		                	<page name="otras_entradas" string="Otras Entradas">
+		                		<group  string="Otras entradas">
+				                   <field name="tabla_otras_entradas">
+				                            <tree editable="bottom">
+				                               <field name="descripcion"/>
+				                               <field name="codigo"/>
+				                               <field name="monto"/>
+				                            </tree>
+				                        </field>
+				                 </group>
+		                	</page>
+		                </notebook>
+            		</sheet>
+            	</xpath>
+            	
+                <!-- <field name="name" position="after">
+                   <field name="freq_pago" string="Frecuencia de pago"/>
+                </field>
+                <field name="date_end" position="attributes">
+                   <attribute name="readonly">1</attribute>
+                   <attribute name="force_save">1</attribute>
+                </field>
+                <field name="credit_note" position="after">
+                   <field name="tipo_nomina"/>
+                   <field name="estructura" attrs="{'invisible' : [('tipo_nomina','!=','E')]}"/>
+                </field> -->
+                <button name="draft_payslip_run" position="after">
+                    <field name="all_payslip_generated" invisible="1" />
+                    <button string="Timbrar Nomina" name="timbrar_nomina" type="object" attrs="{'invisible':[('all_payslip_generated','=',True)]}" class="oe_highlight"/>
+                    <button string="Enviar Nomina" name="enviar_nomina" type="object" attrs="{'invisible':[('all_payslip_generated','!=',True)]}" class="oe_highlight"/>
+                    <button string="Recalcular nómina" name="recalcular_nomina_payslip_batch" type="object" states='draft' class="oe_highlight"/>
+                </button>
+               <!-- <sheet>
+                <group  string="Otras entradas">
+                   <field name="tabla_otras_entradas">
+                            <tree editable="bottom">
+                               <field name="descripcion"/>
+                               <field name="codigo"/>
+                               <field name="monto"/>
+                            </tree>
+                        </field>
+                 </group>
+               </sheet>
+               <sheet>
+               <group cols="4">
+                <group  string="Nómina">
+                   <field name="dias_pagar" />
+                   <field name="no_nomina" /> 
+                 </group>
+                <group  string="Cotización al IMSS">
+                   <field name="imss_dias" />
+                   <field name="imss_mes" />
+                 </group>
+               </group>
+               </sheet> -->
+            </field>
+       </record> 
+
+    <record id="view_hr_payslip_tree" model="ir.ui.view">
+        <field name="name">hr.payslip.inherit.tree</field>
+        <field name="model">hr.payslip</field>
+        <field name="inherit_id" ref="hr_payroll.view_hr_payslip_tree" />
+        <field name="arch" type="xml">
+            <field name="state" position="before">
+                <field name="estado_factura" string="Estado CFDI"/>
+            </field>
+        </field>
+    </record>
+
+</odoo>

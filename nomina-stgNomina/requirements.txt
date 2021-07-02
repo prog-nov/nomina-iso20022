@@ -1,0 +1,4 @@
+unidecode
+altair
+py3o.template
+py3o.formats

@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+        <record id="update_state_action" model="ir.ui.view">
+            <field name="name">Update State</field>
+            <field name="model">update.state</field>
+            <field name="arch" type="xml">
+                <form>
+                    <group>
+                        <group>
+                            <field name="state"/>
+                        </group>
+                    </group>
+                    <footer>
+                        <button name="update_state" string="Update" type="object"/>
+                        <button string="Cancel" class="btn-secondary" special="cancel"/>
+                    </footer>
+                </form>
+            </field>
+        </record>
+    </data>
+</odoo>
