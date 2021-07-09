@@ -916,6 +916,8 @@ class HrPayslip(models.Model):
             dias_base = 15
             tabla_isr = contract.tablas_cfdi_id.tabla_LISR
 
+            
+        _logger.info("*****> contract.periodicidad_pago: " + str(contract.periodicidad_pago))
         #base_mensual_gravada = categories.ALW / dias_base
         #base_mensual_gravada = base_mensual_gravada * payslip.dias_pagar
         _logger.info("*****> categories.ALW: " + str(categories.ALW))
@@ -968,65 +970,20 @@ class HrPayslip(models.Model):
     
     #Fong
     @api.model
-    def calculo_descuentos(self, contract, worked_days, payslip, categories):
-        #cuota del IMSS parte del Empleado
-        #salario_cotizado = contract.sueldo_base_cotizacion * 15
-        _logger.info("#################### Calculo de DESCUENTOS ##################")
+    def calculo_isrVadsa(self, contract, worked_days, payslip, categories):
+        _logger.info("calculando isrVadsa..." + str(contract.periodicidad_pago))
         
-        
-        
-        
-        
-        uma3 =  round(contract.tablas_cfdi_id.uma * 3, 2)
-        _logger.info("uma3: " + str(uma3))
-        sbc_menos_3uma = round(contract.sueldo_base_cotizacion - uma3, 2)
-        _logger.info("sbc_menos_3uma: " + str(sbc_menos_3uma))
-        imss_dias = contract.tablas_cfdi_id.imss_mes / 2
-        _logger.info("imss_dias: " + str(imss_dias))
-        # Enfermedad y maternidad
-        enf_mat_especie = round((contract.tablas_cfdi_id.enf_mat_excedente_e/100) * imss_dias * sbc_menos_3uma, 2)
-        _logger.info("Exedente: " + str(enf_mat_especie))
-        enf_mat_pensio_y_benefi = round((contract.tablas_cfdi_id.enf_mat_gastos_med_e/100) * imss_dias * contract.sueldo_base_cotizacion, 2)
-        _logger.info("Pensionados: " + str(enf_mat_pensio_y_benefi))
-        enf_mat_en_dinero = round((contract.tablas_cfdi_id.enf_mat_prestaciones_e/100) * imss_dias * contract.sueldo_base_cotizacion, 2)
-        _logger.info("Unica: " + str(enf_mat_en_dinero))
-        # Invalidez y vida; Ausentismo/ F. injustificadas - Incapacidades
-        inv_vida_esp_y_dinero = round((contract.tablas_cfdi_id.inv_vida_e/100) * imss_dias * contract.sueldo_base_cotizacion, 2)
-        _logger.info("Invalidez: " + str(inv_vida_esp_y_dinero))
-        # Cesantia y vejez
-        ceav = round((contract.tablas_cfdi_id.cesantia_vejez_e/100) * imss_dias * contract.sueldo_base_cotizacion, 2)
+        dias_base = 30
+        tabla_isr = contract.tablas_cfdi_id.tabla_LISR
 
-        total_imss = enf_mat_especie + enf_mat_pensio_y_benefi + enf_mat_en_dinero + inv_vida_esp_y_dinero + ceav
-
-        
-        _logger.info("contract.sueldo_base_cotizacion * 15: "+str(contract.sueldo_base_cotizacion * 15))
-        _logger.info("total_imss: "+str(total_imss))
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        #########
-        _logger.info("calculando isr..." + str(contract.periodicidad_pago))
-        #sueldo = contract.sueldo_diario * worked_days.WORK100.number_of_days
-        dias_base = 1
-        #tabla_isr = self.env['tablas.cfdi'].browse(contract.tablas_cfdi_id.id)
-        if contract.periodicidad_pago == '04':
-            dias_base = 15
-            tabla_isr = contract.tablas_cfdi_id.tabla_isr_quincenal
-        if contract.periodicidad_pago == '05':
-            dias_base = 15
-            tabla_isr = contract.tablas_cfdi_id.tabla_LISR
-
+            
+        _logger.info("*****> tabla_isr: " + str(tabla_isr))
+        _logger.info("*****> contract.periodicidad_pago: " + str(contract.periodicidad_pago))
         #base_mensual_gravada = categories.ALW / dias_base
         #base_mensual_gravada = base_mensual_gravada * payslip.dias_pagar
         _logger.info("*****> categories.ALW: " + str(categories.ALW))
-        sueldo = categories.ALW
-        
+        sueldo = categories.ALW * 2
+        _logger.info("#################### Calculo de ISR ##################")
         _logger.info("-> Percepciones: " + str(sueldo))
         #if contract.periodicidad_pago == '05':
         #if contract.periodicidad_pago == '04':
@@ -1060,21 +1017,129 @@ class HrPayslip(models.Model):
         _logger.info("-> ISR Marginal: " + str(multiplica))
         suma = round(multiplica + cuota_fija, 6)
         _logger.info("-> Cuota fija: " + str(cuota_fija))
-        #_logger.info("suma: " + str(suma))
+        _logger.info("suma: " + str(suma))
         #resultado = (suma / payslip.dias_pagar) * dias_base
-        resultado = suma
+        resultado = suma/2
 
         _logger.info("-> ISR: " + str(resultado))
         _logger.info("--------------------------------------------------------------")
-        
-        
-        
-        ######
 
+        return resultado
+    
+    @api.model
+    def calculo_isrVadsaSub(self, contract, worked_days, payslip, categories):
+        _logger.info("calculando isrVadsa..." + str(contract.periodicidad_pago))
+        
+        dias_base = 30
+        tabla_isr = contract.tablas_cfdi_id.tabla_LISR
+
+            
+        _logger.info("*****> tabla_isr: " + str(tabla_isr))
+        _logger.info("*****> contract.periodicidad_pago: " + str(contract.periodicidad_pago))
+        #base_mensual_gravada = categories.ALW / dias_base
+        #base_mensual_gravada = base_mensual_gravada * payslip.dias_pagar
+        _logger.info("*****> categories.ALW: " + str(categories.ALW))
+        sueldo = categories.ALW * 2
+        _logger.info("#################### Calculo de ISR ##################")
+        _logger.info("-> Percepciones: " + str(sueldo))
+        #if contract.periodicidad_pago == '05':
+        #if contract.periodicidad_pago == '04':
+            #tabla_isr_mensual = self.env['tablas.cfdi'].browse(contract.tablas_cfdi_id.id).tabla_isr_quincenal
+        #_logger.info("tabla_isr_mensual: " + str(tabla_isr))
+        limite_inferior = 0
+        cuota_fija = 0
+        excedente = 0
+
+        lim_int_ant = 0
+        cuota_fija_ant = 0
+        excedente_ant = 0
+        index = 0
+        for record in tabla_isr:
+            if record.lim_inf > sueldo:
+                limite_inferior = lim_int_ant
+                cuota_fija = cuota_fija_ant
+                excedente = excedente_ant
+                break
+            index += 1
+            lim_int_ant = record.lim_inf
+            cuota_fija_ant = record.c_fija
+            excedente_ant = record.s_excedente
+        
+        _logger.info("-> Limite inferior: " + str(limite_inferior))
+
+        resta = round(sueldo - limite_inferior, 6)
+        _logger.info("-> Excedente limite inferior: " + str(resta))
+        _logger.info("-> % Sobre excedente: " + str(excedente))
+        multiplica = round(resta * (excedente/100), 6)
+        _logger.info("-> ISR Marginal: " + str(multiplica))
+        suma = round(multiplica + cuota_fija, 6)
+        _logger.info("-> Cuota fija: " + str(cuota_fija))
+        _logger.info("suma: " + str(suma))
+        #resultado = (suma / payslip.dias_pagar) * dias_base
+        resultado = suma
+
+        subsidio = 0
+        if sueldo >= 7382.34:
+            subsidio = 0
+            
+        if sueldo <= 7382.33 and sueldo >= 7113.91:
+            subsidio = 217.61
+            
+        if sueldo <= 7113.90 and sueldo >= 6224.68:
+            subsidio = 253.54
+            
+        if sueldo <= 6224.67 and sueldo >= 5335.43:
+            subsidio = 294.63
+            
+        if sueldo <= 5335.42 and sueldo >= 4717.19:
+            subsidio = 324.87
+           
+        if sueldo <= 4717.18 and sueldo >= 4446.16:
+            subsidio = 354.23
+            
+        if sueldo <= 4446.15 and sueldo >= 3537.88:
+            subsidio = 382.46
+           
+        if sueldo <= 3537.87 and sueldo >= 3472.85:
+            subsidio = 392.77
+            
+        if sueldo <= 3472.84 and sueldo >= 2653.39:
+            subsidio = 406.62
+            
+        if sueldo <= 2653.38 and sueldo >= 1768.97:
+            subsidio = 406.83
+            
+        if sueldo <= 1768.96 and sueldo >= 0.01:
+            subsidio = 407.02
+           
+        _logger.info("-> subsidio: " + str(subsidio))
+        restaResSub = resultado - subsidio
+        
+        _logger.info("-> ISR: " + str(restaResSub))
+        _logger.info("--------------------------------------------------------------")
+
+        return restaResSub/2
+    
+    
+    
+    
+    
+    @api.model
+    def calculo_descuentos(self, contract, worked_days, payslip, categories):
+        #cuota del IMSS parte del Empleado
+        #salario_cotizado = contract.sueldo_base_cotizacion * 15
+        _logger.info("#################### Calculo de DESCUENTOS ##################")
+        
+        total_imss = payslip.env['hr.payslip'].calculo2_imss(contract, worked_days, payslip, categories)
+        _logger.info("[total_imss: "+str(total_imss) + "] ")
+        total_isr = payslip.env['hr.payslip'].calculo_isrVadsaSub(contract, worked_days, payslip, categories)
+        _logger.info("[total_isr: "+str(total_isr)+"]")
        
-        total_DESC = (resultado + total_imss)
+        sueldo = categories.ALW
+        _logger.info("sueldo: " + str(sueldo))
+        total_DESC = (total_isr + total_imss)
+        _logger.info("total_DESC 1: " + str(total_DESC))
         total_DESC = sueldo - total_DESC
- 
         _logger.info("total_DESC: "+str(total_DESC))
         return total_DESC 
     #Fong final---------
