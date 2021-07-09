@@ -973,8 +973,16 @@ class HrPayslip(models.Model):
     def calculo_isrVadsa(self, contract, worked_days, payslip, categories):
         _logger.info("calculando isrVadsa..." + str(contract.periodicidad_pago))
         
-        dias_base = 30
-        tabla_isr = contract.tablas_cfdi_id.tabla_LISR
+        #sueldo = contract.sueldo_diario * worked_days.WORK100.number_of_days
+        dias_base = 1
+        #tabla_isr = self.env['tablas.cfdi'].browse(contract.tablas_cfdi_id.id)
+        if contract.periodicidad_pago == '04':
+            dias_base = 15
+            tabla_isr = contract.tablas_cfdi_id.tabla_isr_quincenal
+        if contract.periodicidad_pago == '05':
+            dias_base = 15
+            tabla_isr = contract.tablas_cfdi_id.tabla_LISR
+
 
             
         _logger.info("*****> tabla_isr: " + str(tabla_isr))
@@ -982,7 +990,7 @@ class HrPayslip(models.Model):
         #base_mensual_gravada = categories.ALW / dias_base
         #base_mensual_gravada = base_mensual_gravada * payslip.dias_pagar
         _logger.info("*****> categories.ALW: " + str(categories.ALW))
-        sueldo = categories.ALW * 2
+        sueldo = categories.ALW
         _logger.info("#################### Calculo de ISR ##################")
         _logger.info("-> Percepciones: " + str(sueldo))
         #if contract.periodicidad_pago == '05':
@@ -1010,7 +1018,7 @@ class HrPayslip(models.Model):
         
         _logger.info("-> Limite inferior: " + str(limite_inferior))
 
-        resta = round(sueldo - limite_inferior, 6)
+        resta = round(sueldo - limite_inferior, 6) #base
         _logger.info("-> Excedente limite inferior: " + str(resta))
         _logger.info("-> % Sobre excedente: " + str(excedente))
         multiplica = round(resta * (excedente/100), 6)
@@ -1019,7 +1027,7 @@ class HrPayslip(models.Model):
         _logger.info("-> Cuota fija: " + str(cuota_fija))
         _logger.info("suma: " + str(suma))
         #resultado = (suma / payslip.dias_pagar) * dias_base
-        resultado = suma/2
+        resultado =  suma
 
         _logger.info("-> ISR: " + str(resultado))
         _logger.info("--------------------------------------------------------------")
@@ -1039,7 +1047,7 @@ class HrPayslip(models.Model):
         #base_mensual_gravada = categories.ALW / dias_base
         #base_mensual_gravada = base_mensual_gravada * payslip.dias_pagar
         _logger.info("*****> categories.ALW: " + str(categories.ALW))
-        sueldo = categories.ALW * 2
+        sueldo = categories.ALW 
         _logger.info("#################### Calculo de ISR ##################")
         _logger.info("-> Percepciones: " + str(sueldo))
         #if contract.periodicidad_pago == '05':
