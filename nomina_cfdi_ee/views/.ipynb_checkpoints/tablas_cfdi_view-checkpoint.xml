@@ -41,14 +41,14 @@
                                     <field name="aguinaldo"/>
                                 </tree>
                             </field>
-                           <!--
+                           
                             <field name="tabla_subem" string="Subem mensual/CAS Mensual">
                                 <tree editable="bottom">
                                     <field name="lim_inf"/>
                                     <field name="s_mensual"/>
                                 </tree>
                             </field>
-                            <field name="tabla_subsidio" string="Subsidio Mensual Art. 114 LISR"> 
+                         <!--   <field name="tabla_subsidio" string="Subsidio Mensual Art. 114 LISR"> 
                                 <tree editable="bottom">
                                     <field name="lim_inf"/>
                                     <field name="c_fija"/>
