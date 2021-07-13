@@ -30,6 +30,16 @@ class TablasISRquincenal(models.Model):
     c_fija = fields.Float('Cuota fija') 
     s_excedente = fields.Float('Sobre excedente (%)')
 
+    
+    #Tabla para subquincenal fg
+class TablasSubsidioQlLine(models.Model):
+    _name = 'tablas.subsidioq.line'
+
+    form_id = fields.Many2one('tablas.cfdi', string='Subem quincenal/CAS Quincenal', required=True)
+    lim_inf = fields.Float('Límite inferior') 
+    s_quincenal = fields.Float('Subsidio quincenal')
+    
+    
 class TablasSubsidiolLine(models.Model):
     _name = 'tablas.subsidio.line'
 
@@ -45,6 +55,8 @@ class TablasSubsidio2lLine(models.Model):
     c_fija = fields.Float('Cuota fija') 
     s_imp_marginal = fields.Float('Sobre imp. marginal (%)')
 
+
+    
 class TablasSubsidioAcreditablelLine(models.Model):
     _name = 'tablas.subsidioacreditable.line'
 
@@ -135,6 +147,9 @@ class TablasCFDI(models.Model):
     tabla_semanal = fields.One2many('tablas.periodo.semanal', 'form_id')
     # Nueva tabla para ISR quincenal
     tabla_isr_quincenal = fields.One2many('tablas.isr.quincenal', 'form_id')
+    
+    #Nueva tabla para el subsidio quincenal
+    tabla_subeq = fields.One2many('tablas.subsidioq.line', 'form_id')
 
     uma = fields.Float(string=_('UMA'), default='84.49')
     salario_minimo = fields.Float(string=_('Salario mínimo'))
@@ -195,6 +210,7 @@ class TablasCFDI(models.Model):
 
     retiro_p = fields.Float(string=_('Retiro (%)'), default=2)
     guarderia_p = fields.Float(string=_('Guardería y prestaciones sociales (%)'), default=1)
+    
 
     @api.constrains('name')
     def _check_name(self):

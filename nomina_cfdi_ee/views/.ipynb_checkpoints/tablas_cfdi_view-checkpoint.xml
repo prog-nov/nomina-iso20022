@@ -48,6 +48,13 @@
                                     <field name="s_mensual"/>
                                 </tree>
                             </field>
+                           
+                           <field name="tabla_subeq" string="Subem quincenal/CAS Quincenal">
+                                <tree editable="bottom">
+                                    <field name="lim_inf"/>
+                                    <field name="s_quincenal"/>
+                                </tree>
+                            </field>
                          <!--   <field name="tabla_subsidio" string="Subsidio Mensual Art. 114 LISR"> 
                                 <tree editable="bottom">
                                     <field name="lim_inf"/>

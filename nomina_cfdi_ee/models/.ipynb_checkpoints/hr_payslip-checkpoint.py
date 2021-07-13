@@ -923,6 +923,7 @@ class HrPayslip(models.Model):
     @api.model
     def calculo_isr(self, contract, worked_days, payslip, categories):
         _logger.info("calculando isr..." + str(contract.periodicidad_pago))
+        
         #sueldo = contract.sueldo_diario * worked_days.WORK100.number_of_days
         dias_base = 1
         #tabla_isr = self.env['tablas.cfdi'].browse(contract.tablas_cfdi_id.id)
@@ -985,10 +986,24 @@ class HrPayslip(models.Model):
     
     
     
-    #Fong
+    #Fong 
     @api.model
     def calculo_isrVadsa(self, contract, worked_days, payslip, categories):
         _logger.info("calculando isrVadsa asimilado..." + str(contract.periodicidad_pago))
+        
+        self.env.cr.execute("Select itl_tipo_tabla_isr from hr_payroll_structure where name = 'Asimilados'")
+        tipoTabla = str(self.env.cr.fetchall())
+        _logger.info("query_test: (" + str(tipoTabla)+")")
+        first_char = tipoTabla[5]
+        _logger.info("char1:: (" + str(first_char)+")")
+        
+        divisor = -1
+        if first_char == "1":
+            divisor = 2
+            
+        if first_char == "2":
+            divisor = 1   
+        _logger.info("divisor: " + str(divisor))
         
         #sueldo = contract.sueldo_diario * worked_days.WORK100.number_of_days
         dias_base = 1
@@ -1000,9 +1015,15 @@ class HrPayslip(models.Model):
             dias_base = 30
             tabla_isr = contract.tablas_cfdi_id.tabla_LISR
 
-        dias_base = 30
-        tabla_isr = contract.tablas_cfdi_id.tabla_LISR
-
+        dias_base = 30/divisor
+        _logger.info("dias_base: " + str(dias_base))
+        
+        
+        tabla_isr = contract.tablas_cfdi_id.tabla_isr_quincenal
+        if divisor == 1:
+            tabla_isr = contract.tablas_cfdi_id.tabla_LISR
+        _logger.info("tabla_isr: " + str(tabla_isr))
+ 
             
         _logger.info("*****> tabla_isr: " + str(tabla_isr))
         _logger.info("*****> contract.periodicidad_pago: " + str(contract.periodicidad_pago))
@@ -1010,7 +1031,13 @@ class HrPayslip(models.Model):
         #base_mensual_gravada = base_mensual_gravada * payslip.dias_pagar
         _logger.info("*****> categories.ALW: " + str(categories.ALW))
         sueldo = categories.ALW
-        sueldo = sueldo * 2
+        
+        if divisor == 1:
+            sueldo = sueldo * 2
+        
+        _logger.info("sueldo: " + str(sueldo))
+        
+        
         _logger.info("#################### Calculo de ISR ##################")
         _logger.info("-> Percepciones: " + str(sueldo))
         #if contract.periodicidad_pago == '05':
@@ -1049,7 +1076,10 @@ class HrPayslip(models.Model):
         #_logger.info("suma: " + str(suma))
         #resultado = (suma / payslip.dias_pagar) * dias_base
         resta = sueldo - multiplica
-        resultado =  resta / 2
+        resultado =  resta 
+        if divisor == 1:
+            resultado = resultado / 2
+            _logger.info("resultado / 2")
 
         _logger.info("-> ISR: " + str(resultado))
         _logger.info("--------------------------------------------------------------")
@@ -1059,9 +1089,39 @@ class HrPayslip(models.Model):
     @api.model
     def calculo_isrVadsaSub(self, contract, worked_days, payslip, categories):
         _logger.info("calculando isrVadsa Subsidio..." + str(contract.periodicidad_pago))
-        _logger.info("try: " + str(categories.itl_tipo_tabla_isr))
-        dias_base = 30
-        tabla_isr = contract.tablas_cfdi_id.tabla_LISR
+        
+        self.env.cr.execute("Select itl_tipo_tabla_isr from hr_payroll_structure where name = 'Subsidio'")
+        tipoTabla = str(self.env.cr.fetchall())
+        _logger.info("query_test: (" + str(tipoTabla)+")")
+        first_char = tipoTabla[5]
+        _logger.info("char1:: (" + str(first_char)+")")
+        
+        divisor = -1
+        if first_char == "1":
+            divisor = 2
+            
+        if first_char == "2":
+            divisor = 1   
+        _logger.info("divisor: " + str(divisor))
+        
+        #sueldo = contract.sueldo_diario * worked_days.WORK100.number_of_days
+        dias_base = 1
+        #tabla_isr = self.env['tablas.cfdi'].browse(contract.tablas_cfdi_id.id)
+        if contract.periodicidad_pago == '04':
+            dias_base = 15
+            tabla_isr = contract.tablas_cfdi_id.tabla_isr_quincenal
+        if contract.periodicidad_pago == '05':
+            dias_base = 30
+            tabla_isr = contract.tablas_cfdi_id.tabla_LISR
+
+        dias_base = 30/divisor
+        _logger.info("dias_base: " + str(dias_base))
+        
+        
+        tabla_isr = contract.tablas_cfdi_id.tabla_isr_quincenal
+        if divisor == 1:
+            tabla_isr = contract.tablas_cfdi_id.tabla_LISR
+        _logger.info("tabla_isr: " + str(tabla_isr))
 
             
         _logger.info("*****> tabla_isr: " + str(tabla_isr))
@@ -1069,7 +1129,13 @@ class HrPayslip(models.Model):
         #base_mensual_gravada = categories.ALW / dias_base
         #base_mensual_gravada = base_mensual_gravada * payslip.dias_pagar
         _logger.info("*****> categories.ALW: " + str(categories.ALW))
-        sueldo = categories.ALW * 2
+        sueldo = categories.ALW
+        
+        if divisor == 1:
+            sueldo = sueldo * 2
+        
+        _logger.info("sueldo: " + str(sueldo))
+        
         _logger.info("#################### Calculo de ISR ##################")
         _logger.info("-> Percepciones: " + str(sueldo))
         #if contract.periodicidad_pago == '05':
@@ -1111,8 +1177,12 @@ class HrPayslip(models.Model):
         
         
         tabla_subem = contract.tablas_cfdi_id.tabla_subem
+        if divisor == 2:
+            tabla_subem = contract.tablas_cfdi_id.tabla_subeq
+            
+        _logger.info("--> tabla_isr: " + str(tabla_isr))
         sub_limite_inferior = 0
-        subsidio = 0
+        subsidio = 0 
         
         sub_lim_int_ant = 0
         subsidio_ant = 0
@@ -1130,7 +1200,12 @@ class HrPayslip(models.Model):
             sub_index += 1
             sub_lim_int_ant = record.lim_inf
             _logger.info("-- > sub_lim_int_ant: " + str(sub_lim_int_ant))
-            subsidio_ant = record.s_mensual
+            
+            if divisor == 1:
+                subsidio_ant = record.s_mensual
+            if divisor == 2:
+                subsidio_ant = record.s_quincenal
+                
             _logger.info("-- > subsidio_ant: " + str(subsidio_ant))
             
         _logger.info("-- > salio de for ")
@@ -1143,7 +1218,10 @@ class HrPayslip(models.Model):
         _logger.info("-> ISR: " + str(restaResSub))
         _logger.info("--------------------------------------------------------------")
 
-        return restaResSub/2
+        if divisor == 1:
+            restaResSub = restaResSub / 2
+            _logger.info("restaResSub / 2")
+        return restaResSub
     
     
      
