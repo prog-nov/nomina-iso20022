@@ -2094,7 +2094,6 @@ class HrPayslip(models.Model):
             total = float_repr(inv.l10n_mx_edi_cfdi_amount,
                                precision_digits=inv.currency_id.decimal_places)
             uuid = inv.l10n_mx_edi_cfdi_uuid
-            _logger.info("---> FONG P10 uuid: " + str(uuid)) 
             params = '?re=%s&amp;rr=%s&amp;tt=%s&amp;id=%s' % (
                 tools.html_escape(tools.html_escape(supplier_rfc or '')),
                 tools.html_escape(tools.html_escape(customer_rfc or '')),
@@ -2179,11 +2178,12 @@ class HrPayslip(models.Model):
         
     @api.multi
     def action_payslip_cancel(self):
-        _logger.info("---> _entro FONG XXXX")
+        _logger.info("---> FONG: Entro al metodo de Cancelar Nomina")
         if self.filtered(lambda slip: slip.state == 'done'):
             self.l10n_mx_edi_request_cancellation()
-        return self.filtered(lambda inv: inv.state != 'cancel').action_cancel()
-        return self.write({'state': 'cancel'})
+        self.filtered(lambda inv: inv.state != 'cancel').action_cancel()
+        self.write({'state': 'cancel'})
+        return self.l10n_mx_edi_update_pac_status()
     
     
     

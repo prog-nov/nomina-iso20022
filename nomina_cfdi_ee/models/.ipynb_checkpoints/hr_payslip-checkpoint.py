@@ -2182,8 +2182,9 @@ class HrPayslip(models.Model):
         _logger.info("---> _entro FONG XXXX")
         if self.filtered(lambda slip: slip.state == 'done'):
             self.l10n_mx_edi_request_cancellation()
-        return self.filtered(lambda inv: inv.state != 'cancel').action_cancel()
-        return self.write({'state': 'cancel'})
+        self.filtered(lambda inv: inv.state != 'cancel').action_cancel()
+        self.write({'state': 'cancel'})
+        return self.l10n_mx_edi_update_pac_status()
     
     
     
