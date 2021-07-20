@@ -16,6 +16,9 @@ from odoo.tools import float_round
 from odoo.exceptions import UserError
 from odoo.tools.float_utils import float_repr
 
+import logging
+_logger = logging.getLogger(__name__)
+
 
 class AccountInvoice(models.Model):
     _name = 'account.invoice'
@@ -117,3 +120,43 @@ class AccountInvoice(models.Model):
             msg = '' if cancelled else getattr(response, 'mensaje', None)
             code = '' if cancelled else code
             inv._l10n_mx_edi_post_cancel_process(cancelled, code, msg)
+
+    @api.multi
+    def _l10n_mx_edi_retry(self):
+        '''Try to generate the cfdi attachment and then, sign it.
+        '''
+        _logger.info("############### _l10n_mx_edi_retry ####")
+        #if self.env.context.get('not_sign'):
+        if True:
+            _logger.info("############### ENTRO PARA NO FIRMAR ####")
+            return
+        version = self.l10n_mx_edi_get_pac_version()
+        for inv in self:
+            cfdi_values = inv._l10n_mx_edi_create_cfdi()
+            error = cfdi_values.pop('error', None)
+            cfdi = cfdi_values.pop('cfdi', None)
+            if error:
+                # cfdi failed to be generated
+                inv.l10n_mx_edi_pac_status = 'retry'
+                inv.message_post(body=error, subtype='account.mt_invoice_validated')
+                continue
+            # cfdi has been successfully generated
+            inv.l10n_mx_edi_pac_status = 'to_sign'
+            filename = ('%s-%s-MX-Invoice-%s.xml' % (
+                inv.journal_id.code, inv.number, version.replace('.', '-'))).replace('/', '')
+            ctx = self.env.context.copy()
+            ctx.pop('default_type', False)
+            inv.l10n_mx_edi_cfdi_name = filename
+            attachment_id = self.env['ir.attachment'].with_context(ctx).create({
+                'name': filename,
+                'res_id': inv.id,
+                'res_model': inv._name,
+                'datas': base64.encodestring(cfdi),
+                'datas_fname': filename,
+                'description': 'Mexican invoice',
+                })
+            inv.message_post(
+                body=_('CFDI document generated (may be not signed)'),
+                attachment_ids=[attachment_id.id],
+                subtype='account.mt_invoice_validated')
+            inv._l10n_mx_edi_sign()

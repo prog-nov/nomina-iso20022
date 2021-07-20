@@ -422,8 +422,9 @@ class HrPayslip(models.Model):
         res = []
         self.ensure_one()
         contract = self.contract_id
-        _logger.info("---> contract.periodicidad_pago: " + str(contract.periodicidad_pago))
+        _logger.info("---> contract.periodicidad_pago antes  del  IF(): " + str(contract.periodicidad_pago))
         if contract.periodicidad_pago == '04':
+            _logger.info("entro IF")
             work_entry_type = self.env['hr.work.entry.type'].browse(1)
             sueldo_diario = self.contract_id.sueldo_diario
             amount = sueldo_diario * 15
@@ -437,6 +438,7 @@ class HrPayslip(models.Model):
             res.append(attendance_line)
             
             return res
+        _logger.info("result (DESPUES DE IF): " + str(result))
         return result
             
     '''
@@ -824,6 +826,31 @@ class HrPayslip(models.Model):
         for rec in self:
             rec.devolucion_fondo_ahorro()
         return res
+    
+    
+    
+    def _l10n_mx_edi_post_cancel_process(self, cancelled, code=None, msg=None):
+        '''Post process the results of the cancel service.
+
+        :param cancelled: is the cancel has been done with success
+        :param code: an eventual error code
+        :param msg: an eventual error msg
+        '''
+
+        self.ensure_one()
+        if cancelled:
+            body_msg = _('The cancel service has been called with success')
+            self.l10n_mx_edi_pac_status = 'cancelled'
+        else:
+            body_msg = _('The cancel service requested failed')
+        post_msg = []
+        if code:
+            post_msg.extend([_('Code: %s') % code])
+        if msg:
+            post_msg.extend([_('Message: %s') % msg])
+        self.message_post(
+            body=body_msg + create_list_html(post_msg),
+            subtype='account.mt_invoice_validated')
 
     @api.model
     def calculo_imss(self):
@@ -1075,7 +1102,7 @@ class HrPayslip(models.Model):
         #_logger.info("-> Cuota fija: " + str((cuota_fija/2)))
         #_logger.info("suma: " + str(suma))
         #resultado = (suma / payslip.dias_pagar) * dias_base
-        resta = sueldo - multiplica
+        resta = multiplica #sueldo - multiplica
         resultado =  resta 
         if divisor == 1:
             resultado = resultado / 2
@@ -1654,7 +1681,9 @@ class HrPayslip(models.Model):
         _logger.info("FONG ---> P13")
         url = pac_info['url']
         username = pac_info['username']
+        _logger.info("FONG ---> username: " + str(username))
         password = pac_info['password']
+        _logger.info("FONG ---> password: " + str(password))
         for inv in self:
             cfdi = inv.l10n_mx_edi_cfdi.decode('UTF-8')
             _logger.info("FONG ---> P14 cfdi: " + str(cfdi))
@@ -1814,7 +1843,7 @@ class HrPayslip(models.Model):
         :return: An objectified tree
         '''
         #_logger.info("cfdi: ---< " + str(cfdi))
-        #TODO helper which is not of too much help and should be removed
+        #TODO helper which is not of too much help and should be removed 
         self.ensure_one()
         if cfdi is None and self.l10n_mx_edi_cfdi:
             cfdi = base64.decodestring(self.l10n_mx_edi_cfdi)
@@ -2148,6 +2177,36 @@ class HrPayslip(models.Model):
             'context': ctx,
         }
         
+    @api.multi
+    def action_payslip_cancel(self):
+        _logger.info("---> _entro FONG XXXX")
+        if self.filtered(lambda slip: slip.state == 'done'):
+            self.l10n_mx_edi_request_cancellation()
+        return self.filtered(lambda inv: inv.state != 'cancel').action_cancel()
+        return self.write({'state': 'cancel'})
+    
+    
+    
+    @api.multi
+    def action_cancel(self):
+        moves = self.env['account.move']
+        for inv in self:
+            if inv.move_id:
+                moves += inv.move_id
+            #unreconcile all journal items of the invoice, since the cancellation will unlink them anyway
+            inv.move_id.line_ids.filtered(lambda x: x.account_id.reconcile).remove_move_reconcile()
+
+        # First, set the invoices as cancelled and detach the move ids
+        self.write({'state': 'cancel', 'move_id': False})
+        if moves:
+            # second, invalidate the move(s)
+            moves.button_cancel()
+            # delete the move this invoice was pointing to
+            # Note that the corresponding move_lines and move_reconciles
+            # will be automatically deleted too
+            moves.unlink()
+        return True
+    
 class HrPayslipMail(models.Model):
     _name = "hr.payslip.mail"
     _inherit = ['mail.thread']
@@ -2199,7 +2258,6 @@ class MailTemplate(models.Model):
 """
 
 """
-
     @api.model
     def to_json(self):
         payslip_total_TOP = 0
@@ -2208,7 +2266,7 @@ class MailTemplate(models.Model):
         payslip_total_PERE = 0
         payslip_total_SEIN = 0
         payslip_total_JPRE = 0
-        antiguedad = 1
+        antiguedad = 1y
         if self.contract_id.date_end and self.contract_id.date_start:
             antiguedad = int((self.contract_id.date_end - self.contract_id.date_start + timedelta(days=1)).days/7)
         elif self.date_to and self.contract_id.date_start:

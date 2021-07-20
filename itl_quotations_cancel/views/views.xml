@@ -11,6 +11,16 @@
       </record>
       
       <!--
+      <record model="ir.actions.server" id="itl_quotations_cancel.payslip_cancel">
+          <field name="name">Cancelar masivamente</field>
+          <field name="model_id" ref="hr_payroll.model_hr_payslip"/>
+          <field name="binding_model_id" ref="hr_payroll.model_hr_payslipr"/>
+          <field name="binding_view_types">list</field>
+          <field name="state">code</field>
+          <field name="code">action = records.payslip_cancel()</field>
+      </record>-->
+      
+      <!-- 
       <record model="ir.ui.view" id="itl_view_quotation_tree_with_onboarding">
       <field name="name">itl_sale_payterms list</field>
       <field name="model">sale.order</field>

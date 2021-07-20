@@ -11,6 +11,13 @@ class itl_quotations_cancel(models.Model):
         _logger.info("--> FONG Test")
         self.write({'state': 'cancel'})
 
+class itl_payslip_cancel(models.Model):
+    _inherit = 'hr.payslip'
+    def payslip_cancel(self):
+        _logger.info("--> FONG Test")
+ #       self.write({'state': 'cancel'})
+        
+#domain=[('state','=', 'done')]
         
 
 #     name = fields.Char()
