@@ -947,6 +947,49 @@ class HrPayslip(models.Model):
         _logger.info("total_imss: "+str(total_imss))
         return total_imss
     
+    
+    
+    #
+    @api.model
+    def calculo_imss3(self, contract, worked_days, payslip, categories):
+        #cuota del IMSS parte del Empleado
+        #salario_cotizado = contract.sueldo_base_cotizacion * 15
+        _logger.info("#################### Calculo de IMSS ##################")
+        uma1 = round(contract.tablas_cfdi_id.uma, 2)
+        uma3 =  round(contract.tablas_cfdi_id.uma * 3, 2)
+        _logger.info("uma3: " + str(uma3))
+        
+        sueldo = categories.ALW * 2
+        _logger.info("Sueldo mensual: " + str(sueldo))
+        
+        diasBase = 30.4
+        
+        sueldoDiario = sueldo / diasBase
+        _logger.info("Sueldo diario: " + str(sueldoDiario))
+        
+        operacionExtra = ((15+1.5)/365)+1 
+        _logger.info("operacionExtra: " + str(operacionExtra))
+        
+        salarioBaseCotizacion = operacionExtra * sueldoDiario
+        _logger.info("salarioBaseCotizacion: " + str(salarioBaseCotizacion))
+        
+        salarioBaseCotizacion2 = salarioBaseCotizacion * diasBase
+        _logger.info("salarioBaseCotizacion2: " + str(salarioBaseCotizacion2))
+        
+        totalRetencion = 2.375
+        _logger.info("totalRetencion %: " + str(totalRetencion))
+        
+        retInicIMSS = (salarioBaseCotizacion2/100)*totalRetencion
+        _logger.info("retInicIMSS: " + str(retInicIMSS))
+        
+        total_imss = retInicIMSS / 2
+        _logger.info("total_imss: " + str(total_imss))
+        return total_imss
+    #
+    
+    
+    
+    
     @api.model
     def calculo_isr(self, contract, worked_days, payslip, categories):
         _logger.info("calculando isr..." + str(contract.periodicidad_pago))
@@ -2182,8 +2225,8 @@ class HrPayslip(models.Model):
         if self.filtered(lambda slip: slip.state == 'done'):
             self.l10n_mx_edi_request_cancellation()
         self.filtered(lambda inv: inv.state != 'cancel').action_cancel()
-        self.write({'state': 'cancel'})
-        return self.l10n_mx_edi_update_pac_status()
+        
+        return self.write({'state': 'cancel'})
     
     
     

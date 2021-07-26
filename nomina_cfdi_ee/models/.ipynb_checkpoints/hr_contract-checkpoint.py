@@ -32,10 +32,10 @@ class Contract(models.Model):
                    ('99', 'No aplica'),],
         string=_('Riesgo del puesto'),
     )	
-    sueldo_diario = fields.Float('Sueldo diario')
-    sueldo_hora = fields.Float('Sueldo por hora')
-    sueldo_diario_integrado = fields.Float('Sueldo diario integrado')
-    sueldo_base_cotizacion = fields.Float('Sueldo base cotización (IMSS)')
+    sueldo_diario = fields.Float('Sueldo diario', compute = '_compute_sueldo')
+    sueldo_hora = fields.Float('Sueldo por hora', compute = '_compute_sueldo')
+    sueldo_diario_integrado = fields.Float('Sueldo diario integrado', compute = '_compute_sueldo')
+    sueldo_base_cotizacion = fields.Float('Sueldo base cotización (IMSS)', compute = '_compute_sueldo')
     tablas_cfdi_id = fields.Many2one('tablas.cfdi','Tabla CFDI')
 
     bono_productividad = fields.Boolean('Bono productividad')
@@ -82,7 +82,7 @@ class Contract(models.Model):
     sept_dia = fields.Boolean(string='Séptimo día separado')
     semana_inglesa = fields.Boolean(string='Semana inglesa')
 
-    @api.onchange('wage')
+    @api.depends('wage')
     def _compute_sueldo(self):
         if self.wage:
             sueldo_diario_integrado = self.calculate_sueldo_diario_integrado()
@@ -93,6 +93,11 @@ class Contract(models.Model):
             'sueldo_diario_integrado': self.calculate_sueldo_diario_integrado(),
             'sueldo_base_cotizacion': self.calculate_sueldo_diario_integrado(),
             }
+            
+            self.sueldo_diario = self.wage/30
+            self.sueldo_hora = self.wage/30/8
+            sueldo_diario_integrado = self.calculate_sueldo_diario_integrado(),
+            sueldo_base_cotizacion = self.calculate_sueldo_diario_integrado(),
             self.update(values)
 
     @api.depends('date_start')
